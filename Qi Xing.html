@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Messaging App</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 20px;
+            min-height: 100vh; /* Ensure body takes at least full viewport height */
+        }
+        .app-container {
+            width: 100%;
+            max-width: 400px; /* Default max width for smaller screens */
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            height: 80vh; /* Default height for smaller screens */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 600px) {
+            body {
+                padding-top: 0; /* Remove top padding on smaller screens */
+            }
+            .app-container {
+                max-width: 100%; /* Use full width on smaller screens */
+                height: 100vh; /* Use full viewport height on smaller screens */
+                border-radius: 0; /* Remove border radius on full screen */
+                box-shadow: none; /* Remove box shadow */
+            }
+        }
+
+        /* Adjust for desktop screens */
+        @media (min-width: 601px) {
+             .app-container {
+                 max-width: 800px; /* Increase max width for desktop */
+                 height: 90vh; /* Allow more height or remove fixed height if preferred */
+                 margin: 20px auto; /* Center the container and add some space */
+             }
+              body {
+                   align-items: center; /* Vertically center content on desktop */
+              }
+        }
+
+
+        /* --- Home View Styles --- */
+        .home-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .home-header {
+            background-color: #a0c4ff;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            flex-shrink: 0;
+        }
+        .chat-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .chat-item:hover {
+            background-color: #f5f5f5;
+        }
+        .chat-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .chat-item .chat-info {
+            flex-grow: 1;
+        }
+        .chat-item .chat-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 4px;
+        }
+        .chat-item .last-message {
+            color: #666;
+            font-size: 0.9em;
+             /* Truncate long messages */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+             max-width: 80%; /* Limit width to help with truncation */
+        }
+        .new-chat-button {
+            display: block;
+            width: calc(100% - 30px); /* Adjust for padding */
+            padding: 10px;
+            margin: 15px;
+            background-color: #a0c4ff;
+            border: none;
+            border-radius: 20px;
+            color: #333;
+            font-size: 1em;
+            cursor: pointer;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .new-chat-button:hover {
+            background-color: #8cb3f0;
+        }
+
+
+        /* --- Chat View Styles --- */
+        .chat-view {
+            display: flex; /* Use flexbox for layout */
+            flex-direction: column; /* Stack children vertically */
+            height: 100%;
+        }
+        .chat-header {
+            background-color: #a0c4ff;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #333;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+        .chat-header .back-button {
+            margin-right: 10px;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .chat-header .user-info {
+            display: flex;
+            align-items: center;
+            flex-grow: 1; /* Allow user info to take available space */
+        }
+        .chat-header .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .chat-header .user-info .name {
+            font-weight: bold;
+        }
+        .chat-header .icons i {
+            margin-left: 15px;
+            font-size: 1.2em;
+            cursor: pointer; /* Indicate icons are interactive */
+        }
+        .chat-messages {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Add scrolling to messages */
+            flex-grow: 1; /* Allow messages area to grow */
+        }
+        .message-bubble {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        /* Existing styles for voice and text-image messages */
+        .message-bubble.voice {
+            background-color: #e9e9eb;
+            display: flex;
+            align-items: center;
+            align-self: flex-start;
+        }
+        .message-bubble.voice .play-button {
+            width: 0;
+            height: 0;
+            border-left: 15px solid #333;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .message-bubble.voice .duration {
+            margin-right: 10px;
+        }
+        .message-bubble.voice img {
+             width: 30px;
+             height: 30px;
+             border-radius: 50%;
+        }
+        .message-bubble.text-image {
+            background-color: #dcf8c6; /* Light green for sender */
+             align-self: flex-end; /* Align to the right for sender */
+             display: flex;
+             flex-direction: column;
+        }
+        .message-bubble.text-image img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+         .message-bubble.text-image .text {
+             margin-bottom: 5px;
+         }
+
+        /* New styles for user-sent text messages */
+         .message-bubble.sent-text {
+             background-color: #dcf8c6; /* Light green */
+             align-self: flex-end; /* Align to the right */
+         }
+
+         /* Styles for received text messages */
+         .message-bubble.received-text {
+             background-color: #e9e9eb; /* Light grey */
+             align-self: flex-start; /* Align to the left */
+         }
+
+
+        /* Styles for the chat input area (chatboard) */
+        .chat-input {
+            display: flex;
+            padding: 10px 15px;
+            border-top: 1px solid #eee;
+            background-color: #f9f9f9;
+            flex-shrink: 0; /* Prevent input from shrinking */
+        }
+        .chat-input input[type="text"] {
+            flex-grow: 1; /* Allow input to fill space */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            margin-right: 10px;
+            font-size: 1em;
+            outline: none;
+        }
+        .chat-input button {
+            padding: 10px 20px;
+            background-color: #a0c4ff;
+            border: none;
+            border-radius: 20px;
+            color: #333;
+            font-size: 1em;
+            cursor: pointer;
+            outline: none;
+        }
+        .chat-input button:hover {
+            background-color: #8cb3f0;
+        }
+
+         /* Style for hidden elements */
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Home View -->
+        <div id="homeView" class="home-view">
+            <div class="home-header">Chats</div>
+            <div id="chatList" class="chat-list">
+                <!-- Chat items will be added here by JavaScript -->
+            </div>
+            <button id="newChatButton" class="new-chat-button">New Chat</button>
+        </div>
+
+        <!-- Chat View -->
+        <div id="chatView" class="chat-view hidden">
+            <div class="chat-header">
+                 <span class="back-button" id="backButton">&lt;</span>
+                <div class="user-info">
+                    <img id="chatAvatar" src="https://via.placeholder.com/40" alt="User Avatar">
+                    <div>
+                        <div id="chatName" class="name"></div>
+                        <!-- Optional: add status/secondary info here -->
+                    </div>
+                </div>
+                <div class="icons">
+                    <i>📹</i>
+                    <i>📞</i>
+                    <i>⋮</i>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages for the current chat will be loaded here -->
+            </div>
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button id="sendMessageButton">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const homeView = document.getElementById('homeView');
+        const chatView = document.getElementById('chatView');
+        const chatList = document.getElementById('chatList');
+        const newChatButton = document.getElementById('newChatButton');
+        const backButton = document.getElementById('backButton');
+        const chatNameElement = document.getElementById('chatName');
+        const chatAvatarElement = document.getElementById('chatAvatar');
+        const chatMessagesElement = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageButton = document.getElementById('sendMessageButton');
+
+        let chats = []; // Array to store chat data { id, name, avatar, messages: [] }
+        let currentChatId = null;
+
+        // --- Persistence Functions ---
+        function saveChats() {
+            try {
+                localStorage.setItem('fakeMessagingChats', JSON.stringify(chats));
+            } catch (e) {
+                console.error("Error saving chats to localStorage:", e);
+            }
+        }
+
+        function loadChats() {
+            try {
+                const storedChats = localStorage.getItem('fakeMessagingChats');
+                if (storedChats) {
+                    chats = JSON.parse(storedChats);
+                } else {
+                    // If no chats are stored, add the initial chat
+                     chats.push({
+                         id: 1,
+                         name: 'Qí Xīng',
+                         avatar: 'https://via.placeholder.com/50',
+                         messages: [
+                              {
+                                   id: 101,
+                                   type: 'voice',
+                                   duration: '0:16',
+                                   avatar: 'https://via.placeholder.com/30'
+                              },
+                              {
+                                  id: 102,
+                                  type: 'text-image',
+                                  text: '这是他的照片! (Zhè shì tāde zhàopiàn!) 😄',
+                                  imageUrl: 'https://via.placeholder.com/200x150'
+                              }
+                         ]
+                    });
+                }
+            } catch (e) {
+                console.error("Error loading chats from localStorage:", e);
+                 // Fallback to initial chat if loading fails
+                 chats = [{
+                     id: 1,
+                     name: 'Qí Xīng',
+                     avatar: 'https://via.placeholder.com/50',
+                     messages: [
+                          {
+                               id: 101,
+                               type: 'voice',
+                               duration: '0:16',
+                               avatar: 'https://via.placeholder.com/30'
+                          },
+                          {
+                              id: 102,
+                              type: 'text-image',
+                              text: '这是他的照片! (Zhè shì tāde zhàopiàn!) 😄',
+                              imageUrl: 'https://via.placeholder.com/200x150'
+                          }
+                     ]
+                 }];
+            }
+        }
+
+
+        // --- View Management Functions ---
+        function showView(viewId) {
+            if (viewId === 'home') {
+                homeView.classList.remove('hidden');
+                chatView.classList.add('hidden');
+                renderChatList(); // Update list when returning home
+            } else if (viewId === 'chat') {
+                homeView.classList.add('hidden');
+                chatView.classList.remove('hidden');
+                 // Load messages for the current chat
+                 loadChatMessages(currentChatId);
+            }
+        }
+
+        // Function to render the list of chats on the home page
+        function renderChatList() {
+            chatList.innerHTML = ''; // Clear existing list
+            chats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.classList.add('chat-item');
+                chatItem.dataset.chatId = chat.id; // Store chat ID
+
+                // Get the last message text for preview
+                const lastMessage = chat.messages.length > 0 ? chat.messages[chat.messages.length - 1] : null;
+                let lastMessageText = 'No messages yet';
+                if (lastMessage) {
+                    if (lastMessage.type === 'text' || lastMessage.type === 'sent' || lastMessage.type === 'received-text') {
+                        lastMessageText = lastMessage.text;
+                    } else if (lastMessage.type === 'text-image') {
+                         lastMessageText = lastMessage.text ? lastMessage.text + ' (Image)' : '(Image)';
+                    } else if (lastMessage.type === 'voice') {
+                        lastMessageText = `Voice message (${lastMessage.duration})`;
+                    }
+                }
+
+
+                chatItem.innerHTML = `
+                    <img src="${chat.avatar}" alt="${chat.name} Avatar">
+                    <div class="chat-info">
+                        <div class="chat-name">${chat.name}</div>
+                        <div class="last-message">${lastMessageText}</div>
+                    </div>
+                `;
+
+                chatItem.addEventListener('click', () => {
+                    currentChatId = chat.id;
+                    const selectedChat = chats.find(c => c.id === currentChatId);
+                    if (selectedChat) {
+                        chatNameElement.textContent = selectedChat.name;
+                        chatAvatarElement.src = selectedChat.avatar;
+                    }
+                    showView('chat');
+                });
+
+                chatList.appendChild(chatItem);
+            });
+        }
+
+        // Function to load and display messages for the current chat
+        function loadChatMessages(chatId) {
+             chatMessagesElement.innerHTML = ''; // Clear current messages
+             const chat = chats.find(c => c.id === chatId);
+             if (chat) {
+                 chat.messages.forEach(message => {
+                     const messageBubble = document.createElement('div');
+                     messageBubble.classList.add('message-bubble');
+
+                     // Determine message type and sender
+                     if (message.type === 'sent') {
+                          messageBubble.classList.add('sent-text');
+                          messageBubble.textContent = message.text;
+                     } else if (message.type === 'received-text') {
+                         messageBubble.classList.add('received-text');
+                         messageBubble.textContent = message.text;
+                     }
+                     else if (message.type === 'text-image') {
+                           // Assuming the original example is a 'received' message for now,
+                           // you would need a way to differentiate sent vs received text-image in real data
+                          messageBubble.classList.add('text-image'); // This class handles the internal layout
+                          messageBubble.classList.add('received-text'); // Add class for alignment (adjust if sender)
+                          messageBubble.innerHTML = `<div class="text">${message.text}</div><img src="${message.imageUrl}" alt="Shared Image">`;
+                     } else if (message.type === 'voice') {
+                           // Assuming the original example is a 'received' message for now,
+                           // you would need a way to differentiate sent vs received voice in real data
+                          messageBubble.classList.add('voice'); // This class handles the internal layout
+                          messageBubble.classList.add('received-text'); // Add class for alignment (adjust if sender)
+                          messageBubble.innerHTML = `<div class="play-button"></div><div class="waveform">______</div><div class="duration">${message.duration}</div><img src="${message.avatar}" alt="User Avatar">`;
+                     }
+                     else {
+                         // Default to received text if type is unknown
+                          messageBubble.classList.add('received-text');
+                          messageBubble.textContent = message.text || 'Unknown message type';
+                     }
+
+
+                     chatMessagesElement.appendChild(messageBubble);
+                 });
+                 chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight; // Scroll to bottom
+             }
+        }
+
+
+        // Function to send a message in the current chat
+        function sendMessage() {
+            const messageText = messageInput.value.trim();
+
+            if (messageText !== '' && currentChatId !== null) {
+                const chat = chats.find(c => c.id === currentChatId);
+                if (chat) {
+                    // Add the message to the chat's messages array
+                    const newMessage = {
+                        id: Date.now(), // Simple unique ID
+                        text: messageText,
+                        type: 'sent', // Assume user sends text
+                        timestamp: new Date().toISOString()
+                    };
+                    chat.messages.push(newMessage);
+
+                    // Save chats after sending a message
+                    saveChats();
+
+                    // Render the new message in the chat view
+                    const messageBubble = document.createElement('div');
+                    messageBubble.classList.add('message-bubble', 'sent-text');
+                    messageBubble.textContent = messageText;
+                    chatMessagesElement.appendChild(messageBubble);
+
+                    // Clear the input field
+                    messageInput.value = '';
+
+                    // Scroll to the bottom
+                    chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight;
+
+                    // Note: We don't need to re-render the entire chat list just to update the last message preview.
+                    // A more optimized approach would be to update just that specific chat item on the home screen,
+                    // but for this example, we'll keep it simple.
+                }
+            }
+        }
+
+        // Event listeners
+        newChatButton.addEventListener('click', () => {
+            const chatName = prompt('Enter the name for the new chat:');
+            if (chatName) {
+                const newChat = {
+                    id: Date.now(), // Simple ID
+                    name: chatName,
+                    avatar: 'https://via.placeholder.com/50', // Default avatar
+                    messages: [] // Start with no messages
+                };
+                chats.push(newChat);
+                saveChats(); // Save chats after creating a new one
+                renderChatList(); // Update the displayed list
+            }
+        });
+
+        backButton.addEventListener('click', () => {
+            currentChatId = null; // Reset current chat
+            showView('home');
+        });
+
+        sendMessageButton.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission if any
+                sendMessage();
+            }
+        });
+
+        // --- Initial Load ---
+        loadChats(); // Load chats from localStorage
+        showView('home'); // Start on the home page
+        // renderChatList(); // Called by showView('home')
+
+    </script>
+</body>
+</html>
