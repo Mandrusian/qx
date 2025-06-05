@@ -524,6 +524,14 @@
     <!-- Add a footer section here to match macserialjunkie.com -->
 
     <script>
+        // --- Configuration ---
+        const CONFIG = {
+            // Change this to your local machine's IP address when running the backend
+            // You can find your IP address by running 'ifconfig' in terminal
+            BACKEND_URL: 'http://127.0.0.1:5000', // Local development
+            // BACKEND_URL: 'http://YOUR_IP_ADDRESS:5000', // For GitHub Pages to connect to your local machine
+        };
+
         const loginView = document.getElementById('loginView');
         const signupView = document.getElementById('signupView');
         const forumThreadsView = document.getElementById('forumThreadsView'); // Renamed
@@ -558,11 +566,6 @@
         const backButton = document.getElementById('backButton'); // New back button reference
 
         let currentThreadId = null; // To keep track of the currently viewed thread
-
-
-        // --- Backend Base URL ---
-        // IMPORTANT: Replace with your actual backend URL when deployed
-        const BACKEND_URL = 'http://127.0.0.1:5000'; // Local Flask server default
 
 
         // --- View Switching ---
@@ -630,7 +633,7 @@
             }
 
             try {
-                const response = await fetch(`${BACKEND_URL}/login`, {
+                const response = await fetch(`${CONFIG.BACKEND_URL}/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -671,7 +674,7 @@
             }
 
             try {
-                const response = await fetch(`${BACKEND_URL}/signup`, {
+                const response = await fetch(`${CONFIG.BACKEND_URL}/signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -701,7 +704,7 @@
         async function loadThreads() {
              threadList.innerHTML = '<p style="padding: 15px;">Loading threads...</p>'; // Show loading message
               try {
-                   const response = await fetch(`${BACKEND_URL}/threads`);
+                   const response = await fetch(`${CONFIG.BACKEND_URL}/threads`);
                    const threads = await response.json();
 
                    threadList.innerHTML = ''; // Clear current threads
@@ -755,7 +758,7 @@
              }
 
              try {
-                  const response = await fetch(`${BACKEND_URL}/threads`, {
+                  const response = await fetch(`${CONFIG.BACKEND_URL}/threads`, {
                        method: 'POST',
                        headers: {
                            'Content-Type': 'application/json',
@@ -785,7 +788,7 @@
              // Fetches posts for a specific thread from the backend and displays them.
               postsList.innerHTML = '<p style="padding: 15px;">Loading posts...</p>'; // Show loading message
               try {
-                   const response = await fetch(`${BACKEND_URL}/threads/${threadId}/posts`);
+                   const response = await fetch(`${CONFIG.BACKEND_URL}/threads/${threadId}/posts`);
                    const posts = await response.json();
 
                    postsList.innerHTML = ''; // Clear current posts
@@ -879,7 +882,7 @@
 
             try {
                  // POST to the specific thread's posts endpoint
-                 const response = await fetch(`${BACKEND_URL}/threads/${currentThreadId}/posts`, {
+                 const response = await fetch(`${CONFIG.BACKEND_URL}/threads/${currentThreadId}/posts`, {
                      method: 'POST',
                      // No 'Content-Type' header is needed when sending FormData
                      body: formData,
@@ -922,7 +925,7 @@
 
              try {
                   // Send DELETE request to the backend post endpoint, include username/admin for backend check
-                  const response = await fetch(`${BACKEND_URL}/posts/${postId}?username=${encodeURIComponent(loggedInUser)}&is_admin=${isAdmin}`, {
+                  const response = await fetch(`${CONFIG.BACKEND_URL}/posts/${postId}?username=${encodeURIComponent(loggedInUser)}&is_admin=${isAdmin}`, {
                       method: 'DELETE',
                        headers: {
                           // Include authorization header in a real app (e.g., Bearer token)
@@ -967,7 +970,7 @@
              // Send a request to a backend logout endpoint to invalidate the session/token.
              // For this example, we'll just clear local storage and show simulated success.
              try {
-                 const response = await fetch(`${BACKEND_URL}/logout`, {
+                 const response = await fetch(`${CONFIG.BACKEND_URL}/logout`, {
                      method: 'POST', // Or DELETE, depending on backend
                      headers: {
                           // Include authorization header if needed for logout endpoint

@@ -12,7 +12,27 @@ import datetime
 
 # --- App Configuration ---
 app = Flask(__name__)
-CORS(app) # Enable CORS for cross-origin requests
+# Configure CORS to allow connections from GitHub Pages and local development
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://127.0.0.1:5000",
+            "http://localhost:5000",
+            "https://mandrusian.github.io",
+            "http://mandrusian.github.io"
+        ],
+        "methods": ["GET", "POST", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
+# Add security headers
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    return response
 
 # Configure SQLite database
 # Use an absolute path for the database file
