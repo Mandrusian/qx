@@ -1,6 +1,6 @@
 # Qi Xing Forums
 
-A modern forum application built with Flask and JavaScript.
+A modern forum (web) application built with Flask and JavaScript.
 
 ## Features
 
@@ -10,7 +10,7 @@ A modern forum application built with Flask and JavaScript.
 - Admin capabilities
 - Responsive design
 
-## Setup
+## Setup (only for using QX Locally for testing)
 
 1. Clone the repository
 2. Install Python dependencies:
