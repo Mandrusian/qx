@@ -83,7 +83,7 @@
 
           .header .back-button {
                font-size: 1.5em;
-               cursor: pointer;
+            cursor: pointer;
                 margin-right: 10px;
                 display: none; /* Hidden by default */
            }
@@ -216,18 +216,18 @@
               background-color: #fff;
               border-radius: 8px;
               box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-              padding: 15px;
+            padding: 15px;
               margin-top: 20px;
-         }
+        }
 
          .create-thread-form h3 {
               margin-top: 0;
-              margin-bottom: 10px;
+            margin-bottom: 10px;
          }
 
          .create-thread-form input[type="text"] {
               width: calc(100% - 20px);
-              padding: 10px;
+            padding: 10px;
               border: 1px solid #ccc;
               border-radius: 4px;
               margin-bottom: 10px;
@@ -241,8 +241,8 @@
               border-radius: 20px;
               color: #333;
               font-size: 1em;
-              cursor: pointer;
-         }
+            cursor: pointer;
+        }
 
           .create-thread-form button:hover {
                background-color: #8cb3f0;
@@ -327,8 +327,8 @@
 
         .posting-area textarea {
              width: calc(100% - 20px);
-             padding: 10px;
-             border: 1px solid #ccc;
+            padding: 10px;
+            border: 1px solid #ccc;
              border-radius: 4px;
              margin-bottom: 10px;
              resize: vertical;
@@ -355,18 +355,18 @@
 
 
          .post-button {
-             padding: 10px 20px;
-             background-color: #a0c4ff;
-             border: none;
-             border-radius: 20px;
-             color: #333;
-             font-size: 1em;
-             cursor: pointer;
-         }
+            padding: 10px 20px;
+            background-color: #a0c4ff;
+            border: none;
+            border-radius: 20px;
+            color: #333;
+            font-size: 1em;
+            cursor: pointer;
+        }
 
          .post-button:hover {
-             background-color: #8cb3f0;
-         }
+            background-color: #8cb3f0;
+        }
 
          /* --- Account Menu Styles --- */
          .account-menu {
@@ -516,7 +516,7 @@
                          <button id="submitPostButton">Post Reply</button>
                     </div>
                 </div>
-             </div>
+            </div>
         </div>
 
     </div>
@@ -710,10 +710,19 @@
                    threadList.innerHTML = ''; // Clear current threads
 
                    if (threads.length > 0) {
+                        const loggedInUser = localStorage.getItem('loggedInUser');
+                        const isAdmin = localStorage.getItem('isAdmin') === 'true'; // Get admin status
+
                         threads.forEach(thread => {
                             const threadItem = document.createElement('li');
                             threadItem.classList.add('thread-item');
                             threadItem.dataset.threadId = thread.id; // Store thread ID
+
+                            let deleteButtonHtml = '';
+                            // Show delete button if user is admin
+                            if (isAdmin) {
+                                 deleteButtonHtml = `<span class="thread-delete-button" data-thread-id="${thread.id}">Delete</span>`;
+                            }
 
                             threadItem.innerHTML = `
                                  <div class="thread-info">
@@ -721,7 +730,17 @@
                                      <div class="thread-meta">by ${thread.author}, ${new Date(thread.created_at).toLocaleString()}</div>
                                  </div>
                                  <div class="thread-reply-count">${thread.reply_count} replies</div>
+                                 ${deleteButtonHtml} <!-- Add delete button here -->
                             `;
+
+                             // Add event listener for the delete button if it exists
+                             const deleteButton = threadItem.querySelector('.thread-delete-button');
+                             if (deleteButton) {
+                                  deleteButton.addEventListener('click', (event) => {
+                                       event.stopPropagation(); // Prevent the click from opening the thread
+                                       handleDeleteThread(thread.id);
+                                  });
+                             }
 
                             threadItem.addEventListener('click', () => {
                                  currentThreadId = thread.id; // Set the current thread
@@ -1015,6 +1034,45 @@
         // Check if user is already "logged in" via localStorage
         const initialView = localStorage.getItem('loggedInUser') ? 'threads' : 'login';
         showView(initialView);
+
+        // --- Thread Deletion ---
+        async function handleDeleteThread(threadId) {
+             if (!confirm("Are you sure you want to delete this thread and all its posts?")) {
+                  return; // User cancelled
+             }
+
+             const loggedInUser = localStorage.getItem('loggedInUser');
+             const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+             if (!loggedInUser || !isAdmin) {
+                  alert("You must be logged in as an admin to delete threads.");
+                  showView('login'); // Redirect to login if not admin
+                  return; // Should not happen if button is hidden, but good check
+             }
+
+             try {
+                  // Send DELETE request to the backend thread endpoint, include username/admin for backend check
+                  const response = await fetch(`${CONFIG.BACKEND_URL}/threads/${threadId}?username=${encodeURIComponent(loggedInUser)}&is_admin=${isAdmin}`, {
+                      method: 'DELETE',
+                       headers: {
+                          // Include authorization header in a real app (e.g., Bearer token)
+                       }
+                  });
+
+                  const data = await response.json();
+
+                  if (response.ok) {
+                      alert(data.message);
+                      loadThreads(); // Reload threads to reflect deletion
+                  } else {
+                       alert(`Delete Failed: ${data.message}`);
+                  }
+
+             } catch (error) {
+                  console.error('Error during thread deletion:', error);
+                  alert('An error occurred while deleting the thread. Ensure backend is running and accessible.');
+             }
+        }
 
     </script>
 </body>
